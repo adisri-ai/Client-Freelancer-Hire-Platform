@@ -1,29 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import FreelancerNavbar from "../../components/FreelancerNavbar.jsx";
 import NeuralBackground from "../../components/NeuralBackground.jsx";
 import "../../freelancer.css";
-
+import api from "../../api.js";
+import { AuthContext } from "../../context/AuthContext.jsx";
 export default function Earnings() {
+  
   const [activeTab, setActiveTab] = useState("total");
+  const { user } = useContext(AuthContext);
   const [data, setData] = useState({
-    total: 0,
-    pending: [],
-    withdrawals: []
-  });
-
+  total_earned: 0,
+  total_commission_paid: 0,
+  pending_payments: [],
+  withdrawals: []
+});
   useEffect(() => {
     fetchEarnings();
   }, []);
 
   const fetchEarnings = async () => {
     try {
-      const res = await axios.get(
-        "https://api.randomurl.com/api/freelancer/earnings"
+      const res = await api.get(
+        `/api/earnings/${user.user_id}/dashboard`
       );
       setData(res.data);
     } catch {
-      // ✅ MOCK DATA
       setData({
         total: 18500,
         pending: [
@@ -53,8 +55,6 @@ export default function Earnings() {
 
       <div className="freelancer-container">
         <h2 className="freelancer-title">Earnings Dashboard</h2>
-
-        {/* ✅ Tabs */}
         <div className="earnings-tabs">
           <button
             className={`neon-btn ${activeTab === "total" ? "active" : ""}`}
@@ -76,17 +76,19 @@ export default function Earnings() {
           >
             Withdrawals
           </button>
+           <button
+            className={`neon-btn ${activeTab === "commission" ? "active" : ""}`}
+            onClick={() => setActiveTab("commission")}
+          >
+            Total Commission paid
+          </button>
         </div>
-
-        {/* ✅ TOTAL */}
         {activeTab === "total" && (
           <div className="earnings-total-card">
-            <h1>${data.total.toLocaleString()}</h1>
+            <h1>${data.total_earned.toLocaleString()}</h1>
             <p>Total Lifetime Earnings</p>
           </div>
         )}
-
-        {/* ✅ PENDING TABLE */}
         {activeTab === "pending" && (
           <div className="earnings-table-card">
             <table className="neon-table">
@@ -98,19 +100,17 @@ export default function Earnings() {
                 </tr>
               </thead>
               <tbody>
-                {data.pending.map((p, i) => (
+                {data.pending_payments.map((p, i) => (
                   <tr key={i}>
-                    <td>{p.projectId}</td>
-                    <td>{p.clientId}</td>
-                    <td>${p.amount}</td>
+                    <td>{p.project_id}</td>
+                    <td>{p.client_id}</td>
+                    <td>${p.pending_amount}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-
-        {/* ✅ WITHDRAWALS TABLE */}
         {activeTab === "withdrawals" && (
           <div className="earnings-table-card">
             <table className="neon-table">
@@ -129,6 +129,12 @@ export default function Earnings() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {activeTab === "commission" && (
+          <div className="earnings-total-card">
+            <h1>${data.total_commission_paid.toLocaleString()}</h1>
+            <p>Total Commission Paid</p>
           </div>
         )}
       </div>
