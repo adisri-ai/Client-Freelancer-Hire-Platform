@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 import uuid
 from utils.validator import validate_user_exists
 
-# Note: process_milestone_payment has been removed to enforce the single-payout 
-# architecture via complete_contract_and_release_funds in the contract service.
+
+
 
 async def upgrade_to_pro(user_id: str) -> dict:
     """Sandbox checkout: Freelancer buys the Pro tier."""
@@ -19,13 +19,13 @@ async def upgrade_to_pro(user_id: str) -> dict:
     if user.get("is_pro"):
         raise ValueError("You are already a Pro Freelancer.")
 
-    # Upgrade the user
+    
     await user_collection.update_one(
         {"user_id": user_id},
         {"$set": {"is_pro": True}}
     )
 
-    # Log the outgoing subscription payment ($15/month simulation)
+    
     sub_transaction = {
         "transaction_id": f"sub_{uuid.uuid4().hex[:8]}",
         "freelancer_id": user_id,
@@ -51,13 +51,13 @@ async def get_freelancer_earnings_dashboard(freelancer_id: str) -> dict:
     withdrawals_list = []
     
     for tx in transactions:
-        # 1. Calculate Earnings & Platform Fees
+        
         if tx["type"] == "Earning" and tx["status"] == "Completed":
             total_earned += tx["amount"]
-            # safely get platform fee if it exists from sandbox payments
+            
             total_commission_paid += tx.get("platform_fee", 0.0)
             
-        # 2. Build Pending Payments Table 
+        
         elif tx["type"] == "Earning" and tx["status"] == "Pending":
             pending_payments_list.append({
                 "project_id": tx.get("project_id", "N/A"),
@@ -65,14 +65,14 @@ async def get_freelancer_earnings_dashboard(freelancer_id: str) -> dict:
                 "pending_amount": tx["amount"]
             })
                 
-        # 3. Build Withdrawals Table 
+        
         elif tx["type"] == "Withdrawal" and tx["status"] == "Completed":
             withdrawals_list.append({
                 "date": tx["created_at"].strftime("%Y-%m-%d"),
                 "amount": tx["amount"]
             })
             
-    # Sort withdrawals most recent first
+    
     withdrawals_list.sort(key=lambda x: x["date"], reverse=True)
     
     return {
