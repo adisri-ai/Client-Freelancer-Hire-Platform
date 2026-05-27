@@ -1,31 +1,37 @@
 import { useEffect, useState, useContext } from "react";
-import axios from "axios";
 import FreelancerNavbar from "../../components/FreelancerNavbar.jsx";
 import NeuralBackground from "../../components/NeuralBackground.jsx";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import "../../freelancer.css";
+import api from "../../api.js";
+
 const MOCK_MODE = true;
+
 export default function PortfolioGallery() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
   const [editing, setEditing] = useState(false);
+  const [profileData, setProfileData] = useState({});
+  const [aiReview, setAiReview] = useState("");
+  const [loadingReview, setLoadingReview] = useState(false);
 
   useEffect(() => {
-    if(MOCK_MODE){
-        setProjects([
-          {
-            title: "AI Portfolio Builder",
-            description: "Built an AI-based resume builder.",
-            techStack: "React, Node, GPT-4",
-            link: "https://demo.com",
-            images: []
-          }
-        ]);
-        return;
+    if (MOCK_MODE) {
+      setProjects([
+        {
+          title: "AI Portfolio Builder",
+          description: "Built an AI-based resume builder.",
+          tech_stack: ["React", "Node", "GPT-4"],
+          link: "https://demo.com",
+          images: []
+        }
+      ]);
+      return;
     }
+
     if (!user) {
       navigate("/signin");
       return;
@@ -35,17 +41,19 @@ export default function PortfolioGallery() {
   }, []);
 
   const fetchProjects = async () => {
-    const res = await axios.get(
-      "https://api.randomurl.com/api/freelancer/portfolio"
-    );
-    setProjects(res.data);
+    const res = await api.get(`/api/portfolios/${user.user_id}`);
+    setProjects(res.data.projects);
+    setProfileData(res.data);
   };
 
   const saveProjects = async () => {
-    await axios.put(
-      "https://api.randomurl.com/api/freelancer/portfolio/update",
-      projects
-    );
+    const updatedProfile = {
+      ...profileData,
+      projects: projects
+    };
+
+    await api.put(`/api/portfolios/${user.user_id}`, updatedProfile);
+    setProfileData(updatedProfile);
     setEditing(false);
   };
 
@@ -53,6 +61,35 @@ export default function PortfolioGallery() {
     const updated = [...projects];
     updated[index][key] = value;
     setProjects(updated);
+  };
+  const handleAIReview = async () => {
+    setLoadingReview(true);
+
+    try {
+      if (MOCK_MODE) {
+        setTimeout(() => {
+          setAiReview(
+            "AI Portfolio Review:\n\n✅ Strong technical stack.\n⚠ Add measurable impact metrics.\n💡 Improve project descriptions with outcomes.\nOverall Portfolio Score: 8/10"
+          );
+          setLoadingReview(false);
+        }, 1000);
+        return;
+      }
+
+      const response = await api.post(`/api/ai/review-portfolio?user=${user.user_id}`, {
+        portfolio: {
+          ...profileData,
+          projects: projects
+        }
+      });
+
+      setAiReview(`Flags: \n ${response.data.backend_findings}\n 
+        Suggestions:\n ${response.data.ai_critic_suggestions} `);
+    } catch {
+      alert("Failed to fetch AI review.");
+    }
+
+    setLoadingReview(false);
   };
 
   return (
@@ -64,6 +101,22 @@ export default function PortfolioGallery() {
         <h2 className="freelancer-title">
           My Portfolio Gallery
         </h2>
+
+        <div style={{ marginBottom: 30 }}>
+          <button
+            className="neon-btn"
+            onClick={handleAIReview}
+          >
+            {loadingReview ? "Analyzing..." : "Get AI Review"}
+          </button>
+
+          {aiReview && (
+            <div className="ai-review-box">
+              <h3>AI Portfolio Feedback</h3>
+              <pre>{aiReview}</pre>
+            </div>
+          )}
+        </div>
 
         {projects.map((project, i) => (
           <div key={i} style={projectBlock}>
@@ -87,10 +140,14 @@ export default function PortfolioGallery() {
 
             <Editable
               label="Tech Stack"
-              value={project.techStack}
+              value={
+                Array.isArray(project.tech_stack)
+                  ? project.tech_stack.join(", ")
+                  : project.tech_stack
+              }
               editing={editing}
               onChange={(val) =>
-                updateProject(i, "techStack", val)
+                updateProject(i, "tech_stack", val.split(","))
               }
             />
 
@@ -140,7 +197,8 @@ function Editable({ label, value, editing, onChange }) {
     <div style={{ marginBottom: 10 }}>
       <strong>{label}:</strong>
       {editing ? (
-        <input className="freelancer-input"
+        <input
+          className="freelancer-input"
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
         />
