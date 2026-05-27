@@ -1,20 +1,22 @@
 import { useState, useEffect, useContext } from "react";
 import api from "../../api";
-import FreelancerNavbar from "../../components/FreelancerNavbar,jsx";
-import NeuralBackground from "../../components/NeuralBackground,jsx";
+import FreelancerNavbar from "../../components/FreelancerNavbar.jsx";
+import NeuralBackground from "../../components/NeuralBackground.jsx";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import "../../freelancer.css";
-
+import CommunityNavbar from "../../components/CommunityNavbar.jsx";
 export default function MyMentorshipSessions() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const MOCK_MODE = true;
+  const MOCK_MODE = false;
 
-  const [sessions, setSessions] = useState([]);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [activeTab, setActiveTab] = useState("created");
+  const [createdSessions, setCreatedSessions] = useState([]);
+  const [bookedSessions, setBookedSessions] = useState([]);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [selectedSession, setSelectedSession] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -23,19 +25,40 @@ export default function MyMentorshipSessions() {
     }
 
     if (MOCK_MODE) {
-      setSessions([
-        {
-          id: "M1",
-          title: "Master React Architecture",
-          description: "Deep dive into scalable frontend systems.",
-          price: "Free",
-          link: "https://zoom.com/abc",
-          registrations: [
-            { userId: "U101", name: "John" },
-            { userId: "U102", name: "Jane" }
-          ]
-        }
-      ]);
+      const mockResponse = {
+        user_id: "U100",
+        offered_sessions: [
+          {
+            session_id: "S1",
+            mentor_id: "U100",
+            title: "Master React Architecture",
+            description: "Deep dive into scalable systems.",
+            price: 0,
+            duration_minutes: 60,
+            available_slots: 5,
+            booked_by: ["U101", "U102"],
+            is_active: true,
+            created_at: "2025-01-01"
+          }
+        ],
+        booked_sessions: [
+          {
+            session_id: "S2",
+            mentor_id: "U200",
+            title: "System Design Basics",
+            description: "Learn core system design principles.",
+            price: 25,
+            duration_minutes: 90,
+            available_slots: 0,
+            booked_by: ["U100"],
+            is_active: false,
+            created_at: "2025-02-01"
+          }
+        ]
+      };
+
+      setCreatedSessions(mockResponse.offered_sessions);
+      setBookedSessions(mockResponse.booked_sessions);
       return;
     }
 
@@ -43,8 +66,12 @@ export default function MyMentorshipSessions() {
   }, [user]);
 
   const fetchSessions = async () => {
-    const res = await api.get(`/api/community/mentorships/user/${user.user_id}`);
-    setSessions(res.data);
+    const res = await api.get(
+      `/api/community/mentorship/user/${user.user_id}`
+    );
+
+    setCreatedSessions(res.data.offered_sessions);
+    setBookedSessions(res.data.booked_sessions);
   };
 
   const handleEdit = (session) => {
@@ -54,11 +81,16 @@ export default function MyMentorshipSessions() {
 
   const saveEdit = async () => {
     if (!MOCK_MODE) {
-      await api.put(`/api/community/mentorships/${editForm.id}`, editForm);
+      await api.put(
+        `/api/community/mentorship/${editForm.session_id}`,
+        editForm
+      );
     }
 
-    setSessions((prev) =>
-      prev.map((s) => (s.id === editForm.id ? { ...editForm } : s))
+    setCreatedSessions((prev) =>
+      prev.map((s) =>
+        s.session_id === editForm.session_id ? editForm : s
+      )
     );
 
     setEditing(false);
@@ -68,97 +100,103 @@ export default function MyMentorshipSessions() {
     <>
       <NeuralBackground />
       <FreelancerNavbar />
-
+      <CommunityNavbar />
       <div className="freelancer-container">
-        <h2 className="freelancer-title">My Mentorship Sessions</h2>
-
-        {sessions.map((s) => (
-          <div key={s.id} className="freelancer-card">
-            {editing && selectedSession?.id === s.id ? (
-              <>
-                <input
-                  className="freelancer-input"
-                  value={editForm.title}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, title: e.target.value })
-                  }
-                />
-                <input
-                  className="freelancer-input"
-                  value={editForm.link}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, link: e.target.value })
-                  }
-                />
-                <button className="neon-btn" onClick={saveEdit}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <>
-                <h3>{s.title}</h3>
-                <p>{s.description}</p>
-                <p>
-                  <strong>Price:</strong> {s.price}
-                </p>
-                <p>
-                  <strong>Link:</strong>{" "}
-                  <a href={s.link} target="_blank">
-                    Join
-                  </a>
-                </p>
-
-                <div style={{ marginTop: 15 }}>
-                  <button
-                    className="neon-btn"
-                    onClick={() => {
-                      setSelectedSession(s);
-                      handleEdit(s);
-                    }}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="neon-btn"
-                    onClick={() => setSelectedSession(s)}
-                  >
-                    View Registrations
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-
-        {/* ✅ Registrations Modal */}
-        {selectedSession && !editing && (
-          <div
-            className="modal-overlay"
-            onClick={() => setSelectedSession(null)}
+        <h2 className="freelancer-title">
+          My Mentorship Sessions
+        </h2>
+        <div style={{ marginBottom: 20 }}>
+          <button
+            className="neon-btn"
+            onClick={() => setActiveTab("created")}
           >
-            <div className="modal-card" style={{ width: 500 }}>
-              <h2>Registrations</h2>
+            My Created Sessions
+          </button>
 
-              <table className="neon-table">
-                <thead>
-                  <tr>
-                    <th>User ID</th>
-                    <th>Name</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedSession.registrations.map((r, i) => (
-                    <tr key={i}>
-                      <td>{r.userId}</td>
-                      <td>{r.name}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <button
+            className="neon-btn"
+            style={{ marginLeft: 10 }}
+            onClick={() => setActiveTab("participated")}
+          >
+            My Participated Sessions
+          </button>
+        </div>
+
+        {activeTab === "created" &&
+          createdSessions.map((s) => (
+            <div key={s.session_id} className="freelancer-card">
+              {editing && editForm.session_id === s.session_id ? (
+                <>
+                  <input
+                    className="freelancer-input"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        title: e.target.value
+                      })
+                    }
+                  />
+                  <textarea
+                    className="freelancer-input"
+                    value={editForm.description}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        description: e.target.value
+                      })
+                    }
+                  />
+                  <button className="neon-btn" onClick={saveEdit}>
+                    Save
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3>{s.title}</h3>
+                  <p>{s.description}</p>
+                  <p>
+                    <strong>Price:</strong>{" "}
+                    {s.price === 0 ? "Free" : `$${s.price}`}
+                  </p>
+                  <p>
+                    <strong>Duration:</strong> {s.duration_minutes} mins
+                  </p>
+                  <p>
+                    <strong>Available Slots:</strong>{" "}
+                    {s.available_slots}
+                  </p>
+
+                  {s.is_active && (
+                    <button
+                      className="neon-btn"
+                      onClick={() => handleEdit(s)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+        {activeTab === "participated" &&
+          bookedSessions.map((s) => (
+            <div key={s.session_id} className="freelancer-card">
+              <h3>{s.title}</h3>
+              <p>{s.description}</p>
+              <p>
+                <strong>Mentor:</strong> {s.mentor_id}
+              </p>
+              <p>
+                <strong>Price:</strong>{" "}
+                {s.price === 0 ? "Free" : `$${s.price}`}
+              </p>
+              <p>
+                <strong>Status:</strong>{" "}
+                {s.is_active ? "Active" : "Completed"}
+              </p>
+            </div>
+          ))}
       </div>
     </>
   );
