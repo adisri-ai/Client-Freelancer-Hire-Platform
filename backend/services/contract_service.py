@@ -6,17 +6,17 @@ from datetime import datetime
 
 async def create_contract(proposal_id: str) -> dict:
     """Converts an accepted proposal into an active contract."""
-    # 1. Fetch the proposal
+    
     proposal = await proposal_collection.find_one({"proposal_id": proposal_id})
     if not proposal:
         raise ValueError("Proposal not found")
 
-    # 2. Fetch the project to get the client_id
+
     project = await client_request_collection.find_one({"project_id": proposal["project_id"]})
     if not project:
         raise ValueError("Associated project not found")
 
-    # 3. Create the contract document
+
     contract_dict = {
         "contract_id": f"cont_{uuid.uuid4().hex[:8]}",
         "proposal_id": proposal_id,
@@ -31,7 +31,7 @@ async def create_contract(proposal_id: str) -> dict:
 
     await contract_collection.insert_one(contract_dict)
     
-    # 4. Update the statuses of the original proposal and project
+    
     await proposal_collection.update_one(
         {"proposal_id": proposal_id}, 
         {"$set": {"status": "Accepted"}}
@@ -45,9 +45,6 @@ async def create_contract(proposal_id: str) -> dict:
     return contract_dict
 
 
-# ==========================================
-# NEW: FETCH ACTIVE CONTRACTS
-# ==========================================
 
 async def get_active_contracts_for_client(client_id: str) -> list:
     """Fetches all currently active contracts for a specific client."""
@@ -57,7 +54,7 @@ async def get_active_contracts_for_client(client_id: str) -> list:
         "status": ProjectStatus.in_progress
     })
     
-    # Assuming you are using Motor (async MongoDB driver)
+    
     contracts = await cursor.to_list(length=100)
     for contract in contracts:
         contract.pop("_id", None)
@@ -79,9 +76,7 @@ async def get_active_contracts_for_freelancer(freelancer_id: str) -> list:
     return contracts
 
 
-# ==========================================
-# UPDATED: PROJECT COMPLETION & FUND RELEASE
-# ==========================================
+
 
 async def complete_contract_and_release_funds(contract_id: str) -> dict:
     """Marks the entire project as complete, takes platform fee, and releases total funds."""
@@ -94,11 +89,11 @@ async def complete_contract_and_release_funds(contract_id: str) -> dict:
 
     total_amount = contract.get("total_amount", 0)
 
-    # 1. Sandbox Commission Logic (10% platform cut)
+    
     platform_fee = total_amount * 0.10
     freelancer_earnings = total_amount * 0.90
 
-    # 2. Update the contract document in MongoDB
+    
     await contract_collection.update_one(
         {"contract_id": contract_id},
         {"$set": {
@@ -107,13 +102,13 @@ async def complete_contract_and_release_funds(contract_id: str) -> dict:
         }}
     )
     
-    # 3. Update the associated project status to Completed
+    
     await client_request_collection.update_one(
         {"project_id": contract["project_id"]}, 
         {"$set": {"status": "Completed"}}
     )
 
-    # 4. Record the earning in the transactions ledger
+    
     transaction_dict = {
         "transaction_id": f"tx_{uuid.uuid4().hex[:8]}",
         "freelancer_id": contract["freelancer_id"],
@@ -126,7 +121,7 @@ async def complete_contract_and_release_funds(contract_id: str) -> dict:
     }
     await transaction_collection.insert_one(transaction_dict)
 
-    # Clean up return object
+    
     contract.pop("_id", None)
     contract["status"] = "Completed"
 
