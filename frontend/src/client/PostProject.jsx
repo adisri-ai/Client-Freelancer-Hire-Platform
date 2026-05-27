@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import "../../freelancer.css";
 import api from "../../api.js";
 
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 
 export default function PostProject() {
   const { user } = useContext(AuthContext);
@@ -57,15 +57,18 @@ export default function PostProject() {
         },
         deadline: form.deadline,
         project_type: form.type
+      }, {
+        headers:{
+          "x-user-id" : user.user_id
+        }
       });
 
-      alert("✅ Project Posted");
+      alert("Project Posted");
     } catch {
-      alert("❌ Failed");
+      alert("Failed");
     }
   };
 
-  // ✅ AI PROJECT SCOPE
   const handleAIScope = async () => {
     setLoadingScope(true);
 
@@ -90,9 +93,16 @@ export default function PostProject() {
 
       const response = await api.post("/api/ai/scope-project", {
         client_input: form.description
+      },
+      {
+        headers:{
+          "x-user-id" : user.user_id
+        }
       });
 
-      setScopeResult(response.data);
+      setScopeResult(`\n Project Tier: ${response.data.tier_assigned}\n
+                      Reasoning : ${response.data.draft_data.reasoning_for_tier}\n
+                      Points to note ${response.data.draft_data.deliverables}`);
     } catch {
       alert("AI Scope Failed");
     }
@@ -100,7 +110,6 @@ export default function PostProject() {
     setLoadingScope(false);
   };
 
-  // ✅ MATCH BEST FREELANCERS
   const handleMatchFreelancers = async () => {
     setLoadingMatch(true);
 
@@ -182,15 +191,12 @@ export default function PostProject() {
           </form>
         </div>
 
-        {/* ✅ AI Scope Result */}
         {scopeResult && (
           <div className="ai-review-box">
             <h3>AI Project Scope Result</h3>
             <pre>{JSON.stringify(scopeResult, null, 2)}</pre>
           </div>
         )}
-
-        {/* ✅ Match Result */}
         {matchResult.length > 0 && (
           <div className="ai-review-box">
             <h3>Top Matched Freelancers</h3>
