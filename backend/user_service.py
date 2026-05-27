@@ -19,8 +19,6 @@ def hash_password(password: str) -> str:
 
 async def create_user(user_data: UserSignup) -> dict:
     """Registers a new user securely with DB-level uniqueness."""
-
-    # 1. Quick check for existing email
     existing_user = await user_collection.find_one({"email": user_data.email})
     if existing_user:
         raise ValueError("Email is already registered")
@@ -35,7 +33,6 @@ async def create_user(user_data: UserSignup) -> dict:
         hashed_password=hash_password(user_data.password)
     )
 
-    # 2. Insert with a safety net for database-level race conditions
     try:
         await user_collection.insert_one(new_user.model_dump())
         if user_data.role in ["Freelancer", "Both"]:
@@ -50,8 +47,6 @@ async def create_user(user_data: UserSignup) -> dict:
                 "projects": []
             })
     except DuplicateKeyError:
-        # This catches the edge case where two users sign up with the same email 
-        # at the exact same millisecond, or a UUID somehow collides.
         raise ValueError("A user with this Email or User ID already exists.")
     
     safe_user = new_user.model_dump()
