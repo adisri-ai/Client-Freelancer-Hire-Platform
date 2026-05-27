@@ -19,6 +19,7 @@ def hash_password(password: str) -> str:
 
 async def create_user(user_data: UserSignup) -> dict:
     """Registers a new user securely with DB-level uniqueness."""
+
     existing_user = await user_collection.find_one({"email": user_data.email})
     if existing_user:
         raise ValueError("Email is already registered")
@@ -64,18 +65,15 @@ async def verify_login(login_data: UserLogin) -> dict:
     if not user:
         raise ValueError("Invalid email or password")
         
-    # Remove sensitive and internal database fields
     user.pop("_id", None)  
     user.pop("hashed_password", None)
     
-    # user_id is inherently part of the 'user' dictionary here because it was saved
-    # in create_user. It will be successfully returned to your router.
+    
     return user
 
 async def get_full_profile(user_id: str) -> dict:
     """Fetches user, portfolio, AND calculates reviews dynamically."""
     
-    # 1. Fetch the User Account
     user = await user_collection.find_one({"user_id": user_id})
     if not user:
         raise ValueError("User not found")
@@ -83,7 +81,6 @@ async def get_full_profile(user_id: str) -> dict:
     user.pop("_id", None)
     user.pop("hashed_password", None) 
 
-    # 2. Check role
     role = user.get("role", "")
     if isinstance(role, str) and role.lower() == "freelancer":
         
