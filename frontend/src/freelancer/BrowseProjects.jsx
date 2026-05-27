@@ -5,7 +5,7 @@ import NeuralBackground from "../../components/NeuralBackground.jsx";
 import "../../freelancer.css";
 import api from "../../api.js";
 export default function BrowseProjects() {
-  const MOCK_MODE = true;
+  const MOCK_MODE = false;
 
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -42,14 +42,13 @@ export default function BrowseProjects() {
   }, []);
 
   const fetchProjects = async () => {
-    try {
-      const res = api.get("/api/marketplace/requests")
-
-      setProjects(res.data);
-    } catch {
-      console.log("Failed fetching projects");
-    }
-  };
+  try {
+    const res = await api.get("/api/marketplace/requests");
+    setProjects(res.data);
+  } catch {
+    console.log("Failed fetching projects");
+  }
+};
 
   return (
     <>
@@ -62,7 +61,7 @@ export default function BrowseProjects() {
         {projects.map((project, i) => (
           <div key={i} className="project-card">
             <h4 className="client-name">
-              {project.clientName}
+              {project.client_id}
             </h4>
 
             <h2 className="project-title">
@@ -70,7 +69,7 @@ export default function BrowseProjects() {
             </h2>
 
             <div className="skills-container">
-              {project.skills.map((skill, idx) => (
+              {(project.required_skills || []).map((skill, idx) => (
                 <span key={idx} className="skill-badge">
                   {skill}
                 </span>
@@ -78,7 +77,7 @@ export default function BrowseProjects() {
             </div>
 
             <p className="budget-text">
-              Budget: {project.budget_range.min} - {project.budget_range.max}
+              Budget: {project.budget_range?.min || 0} - {project.budget_range?.max || 0}
             </p>
 
             <button
@@ -89,8 +88,6 @@ export default function BrowseProjects() {
             </button>
           </div>
         ))}
-
-        {/* ✅ MODAL */}
         {selectedProject && (
           <div
             className="modal-overlay"
@@ -102,9 +99,14 @@ export default function BrowseProjects() {
               <p><strong>Project ID:</strong> {selectedProject.project_id}</p>
               <p><strong>Client ID:</strong> {selectedProject.client_id}</p>
               <p><strong>Description:</strong> {selectedProject.description}</p>
-              <p><strong>Skills:</strong> {selectedProject.skills.join(", ")}</p>
-              <p><strong>Budget:</strong> $ {selectedProject.budget.min} - $ (selectedProject.budget.max)</p>
-              <p><strong>Deadline:</strong> {selectedProject.deadline}</p>
+              <p><strong>Skills:</strong> {selectedProject.required_skills.join(", ")}</p>
+              <p>
+                  <strong>Budget:</strong> $
+                  {selectedProject.budget_range?.min || 0}
+                  -
+                  {selectedProject.budget_range?.max || 0}
+              </p>
+              <p><strong>Deadline:</strong> {eselectdProject.deadline ? selectedProject.deadline.toLocaleString()  : "N/A"}</p>
               <p><strong>Type:</strong> {selectedProject.type}</p>
             </div>
           </div>
