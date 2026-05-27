@@ -5,11 +5,11 @@ import NeuralBackground from "../../components/NeuralBackground";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "../../freelancer.css";
-
+import CommunityNavbar from "../../components/CommunityNavbar.jsx";
 export default function MySkillChallenges() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const MOCK_MODE = true;
+  const MOCK_MODE = false;
 
   const [challenges, setChallenges] = useState([]);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -38,7 +38,7 @@ export default function MySkillChallenges() {
   }, [user]);
 
   const fetchChallenges = async () => {
-    const res = await api.get(`/api/community/challenges/user/${user.user_id}`);
+    const res = await api.get(`/api/community/challenges/creator/${user.user_id}`);
     setChallenges(res.data);
   };
 
@@ -48,8 +48,6 @@ export default function MySkillChallenges() {
         submission_id: submissionId
       });
     }
-
-    // ✅ Update local state
     setChallenges((prev) =>
       prev.map((c) => {
         if (c.id === challengeId) {
@@ -78,7 +76,7 @@ export default function MySkillChallenges() {
     <>
       <NeuralBackground />
       <FreelancerNavbar />
-
+      <CommunityNavbar />
       <div className="freelancer-container">
         <h2 className="freelancer-title">My Skill Challenges</h2>
 
@@ -93,8 +91,6 @@ export default function MySkillChallenges() {
             <p>Submissions: {c.submissions.length}</p>
           </div>
         ))}
-
-        {/* ✅ Submission Modal */}
         {selectedChallenge && (
           <div
             className="modal-overlay"
@@ -114,10 +110,10 @@ export default function MySkillChallenges() {
                 </thead>
                 <tbody>
                   {selectedChallenge.submissions.map((s) => (
-                    <tr key={s.id}>
-                      <td>{s.userId}</td>
+                    <tr key={s.freelancer_id}>
+                      <td>{s.freelancer_id}</td>
                       <td>
-                        <a href={s.link} target="_blank">
+                        <a href={s.submission_url} target="_blank">
                           View
                         </a>
                       </td>
