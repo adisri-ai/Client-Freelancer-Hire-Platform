@@ -11,7 +11,7 @@ export default function SavedFreelancers() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const MOCK_MODE = true;
+  const MOCK_MODE = false;
 
   const [freelancers, setFreelancers] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -40,11 +40,10 @@ export default function SavedFreelancers() {
   }, []);
 
   const fetchSaved = async () => {
-    const res = await api.get("/api/bookmarks/add");
-    setFreelancers(res.data);
+    const res = await api.get(`/api/bookmarks/${user.user_id}/list`);
+    setFreelancers(res.data.saved_freelancers);
   };
 
-  // ✅ View Profile (fetch full profile)
   const handleViewProfile = async (freelancer) => {
     if (MOCK_MODE) {
       setSelectedProfile(freelancer);
@@ -55,7 +54,6 @@ export default function SavedFreelancers() {
     setSelectedProfile(res.data);
   };
 
-  // ✅ Remove from Bookmark
   const handleRemove = async (freelancerId) => {
     if (!MOCK_MODE) {
       await api.delete(`/api/bookmarks/remove` , {
@@ -71,7 +69,6 @@ export default function SavedFreelancers() {
     setSelectedProfile(null);
   };
 
-  // ✅ Add Freelancer (Mock)
   const handleAddFreelancer = async () => {
     if (!MOCK_MODE) {
       await api.post("/api/client/saved-freelancers/add", {
@@ -100,7 +97,7 @@ export default function SavedFreelancers() {
         </div>
 
         <div className="saved-grid">
-          {freelancers.map((f, i) => (
+          {freelancers.length>0 && freelancers.map((f, i) => (
             <div
               key={i}
               className="saved-card"
