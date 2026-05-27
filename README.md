@@ -26,6 +26,9 @@ The project has the following AI Integrations which differentiate it from any or
 3. **Project Idea Formulation**  : The Client before posting his project publicly can run it on the AI Integration to reshape the project into a realistic idea.
 4. **AI-Generated Skilltest**   : To get a skill verified on his profile a freelancer must clear a skilltest the questions for which are generate by our AI
 during the runtime and hence the questions are not stati finishing scope of palagrism/copying.
+# Sample credentials: 
+1. Freelancer: email- free1@talentstage.com password- freelancer1
+2. CLient:     email- cli1@talentstage.com  passowrd- cli1cli1
 # Limitations  
 1. Due to the Free Hosting of Render, the backend may take longer (around 2 mins) to respond to the first request
 2. Sandox payment has implemented using virtual coins assigned by our website rather than hosting with a card number, CVV, etc.
