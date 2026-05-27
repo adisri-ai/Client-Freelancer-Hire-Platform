@@ -207,8 +207,6 @@ class verifiedSkills(BaseModel):
     client_id: str
     skill: str
 
-# --- COMMUNITY SCHEMAS ---
-
 class FeedPostCreate(BaseModel):
     author_id: str
     content: str = Field(..., max_length=1000)
