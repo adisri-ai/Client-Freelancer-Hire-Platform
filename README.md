@@ -1,4 +1,5 @@
-[Project Live Link](https://client-free-frontend.vercel.app/) can be accessed from here
+[Project Live Link](https://client-free-frontend.vercel.app/) can be accessed from here  
+(Note: Login page may take time to initialize because of render free tier backend limits)  
 # Problem statement selected: TalentStage — Creator & Freelancer Portfolio + Hiring Marketplace   
 **The Vision**: Build a marketplace where creative and technical freelancers (designers,   
 developers, video editors, content writers) can showcase their work, get discovered by   
