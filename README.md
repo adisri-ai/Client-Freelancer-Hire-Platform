@@ -34,7 +34,3 @@ during the runtime and hence the questions are not stati finishing scope of pala
 1. Due to the Free Hosting of Render, the backend may take longer (around 2 mins) to respond to the first request
 2. Sandox payment has implemented using virtual coins assigned by our website rather than hosting with a card number, CVV, etc.
 3. The Project makes use of FREE LLM Models and hence they have rate limit restrictions. For too many AI request the AI fetch could fail.
-# Team Member Contributions:   
-1. Aditya S : Frontend and Deployment
-2. Avinash Reddy : Backend, AI Integration, Sandbox payment
-3. S Sriharsha : Database integration
