@@ -14,9 +14,12 @@ decisions.
 # Local Deployment Steps:   
 1. Download the complete frontend and backend files
 2. In backend add Your GOOGLE_GEMINI_API_KEY, GROQ_API_KEY, MONGO_URI and HUGGINGFACEHUB_API_TOKEN as environment variables
-3. run the command in backend root directory : ***pip install -r requirements.txt***
+3. run the command in backend root directory :
+   ```
+   pip install -r requirements.txt
 4. To host the backend run the command *uvicorn main:app --host 0.0.0.0 --port ${PORT}* where PORT could be any system port for your choice.
-   Eg: *uvicorn main:app --host 0.0.0.0 --port 8000*
+   ```
+   uvicorn main:app --host 0.0.0.0 --port 8000
 5. For the frontend make sure your system already has react js and Node js. Set the backend endpoint using .env
 6. To install the other packages run the command *npm run build*
 7. To host the frontend now run the command: *npm run dev*
